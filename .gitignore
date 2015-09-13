@@ -1,0 +1,8 @@
+*.vcxproj*
+*.sln
+*.*sdf
+*.ico
+*.png
+*.wav
+Debug/
+Release/
