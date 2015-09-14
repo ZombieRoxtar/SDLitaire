@@ -443,6 +443,10 @@ void LCard::render(SDL_Renderer* renderer, point* slot)
 	{
 		mPosX = slot->x;
 		mPosY = slot->y;
+		if (mRank != 0)
+		{
+			mPosY += (mFile * (mTexture->getHeight() / 10 ));
+		}
 	}
 
 	mTexture->render(renderer, mPosX, mPosY);

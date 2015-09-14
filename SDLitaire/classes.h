@@ -259,6 +259,7 @@ public:
 	LTexture* getCardBack() { return& mDeckTexture; }
 	LTexture* getCardOutline() { return& mOutlineTexture; }
 	point* getCardPlace(int place) { return& mCardPlaces[place]; }
+	LCard* getCard(int rank, int file) { return mRanks[rank][file]; }
 
 private:
 	/* Window data */
