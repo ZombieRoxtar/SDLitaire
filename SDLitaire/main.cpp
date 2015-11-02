@@ -49,17 +49,13 @@ int main(int argc, char* args[])
 		card[i]->setFile(NUM_CARDS - i);
 		card[i]->assocGame(gameManager);
 		card[i]->setTexture(deckTexture);
+		// Values here?
 	}
 
 	/* Initial scaling should happen as soon as possible */
 	deckTexture->aspectScale(winW / CARD_SCALE, winH / CARD_SCALE);
 	outlineTexture->aspectScale(winW / CARD_SCALE, winH / CARD_SCALE);
 	gameManager.computeCardPlaces();
-
-	for (int i = 0; i < NUM_CARDS; i++)
-	{
-		// Values here?
-	}
 
 	/* Deal Cards */
 	int rank = 6; /* Rank 6 is the first one in the second row */
@@ -74,7 +70,7 @@ int main(int argc, char* args[])
 		card[i]->dealTo(rank);
 		rank++;
 	}
-	card[FIRST_DEAL + 1]->setClickability(true);
+	card[FIRST_DEAL + 1]->setClickability(true); /* Top Deck Card */
 
 	SDL_Event e; /* Event handler */
 	SDL_EventState(SDL_SYSWMEVENT, SDL_ENABLE); /* Allow standard window events to process */
@@ -172,12 +168,22 @@ int main(int argc, char* args[])
 
 			for (int i = 0; i < CARD_RANKS; i++) /* BOOM! Implicit Z ordering */
 			{
+				LCard* tempCard = NULL;
 				for (int j = 0; j < NUM_CARDS; j++)
 				{
-					if (gameManager.getCard(i, j))
+					if (tempCard = gameManager.getCard(i, j))
 					{
-						gameManager.getCard(i, j)->render(gameRenderer, gameManager.getCardPlace(i));
+						tempCard->render(gameRenderer, gameManager.getCardPlace(i));
+						if (!tempCard->isDragging())
+						{
+							tempCard = NULL;
+						}
 					}
+				}
+				if (tempCard) /* Dragging card is rendered last */
+				{
+					/* or would be, but this code has no effect at all... */
+					tempCard->render(gameRenderer, gameManager.getCardPlace(tempCard->getRank()));
 				}
 			}
 

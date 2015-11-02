@@ -13,7 +13,7 @@
 #define FIRST_DEAL 28
 
 #define SUIT_SIZE 13
-#define CARD_RANKS SUIT_SIZE
+#define CARD_RANKS 13
 
 #define ID_EXIT 1
 
@@ -164,6 +164,8 @@ public:
 	void assocGame(LAssetManager& game);
 
 	bool getClickability() { return mClickable; }
+	bool isDragging() { return mDragging; }
+	bool isSliding() { return mSliding; }
 	int getRank() { return mRank; }
 	int getDestRank() { return mDestRank; }
 	int getFile() { return mFile; }
