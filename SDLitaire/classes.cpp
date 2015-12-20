@@ -821,7 +821,7 @@ bool LAssetManager::LoadMedia()
 
 	/*
 		Yes, I'm pretending that index 0 doesn't exist.
-		That way 1 = Ace, 2 = 2, ...
+		This way 1 = Ace, 2 = 2, ...
 	*/
 	int order[NUM_FACES];
 	int values[NUM_SUITS][NUM_FACES];
@@ -829,7 +829,7 @@ bool LAssetManager::LoadMedia()
 	{
 		order[i] = i;
 	}
-	srand(time(0));
+	srand(unsigned(time(0)));
 	for (int i = 0; i < NUM_SUITS; i++)
 	{
 		std::random_shuffle(std::begin(order) + 1, std::end(order));

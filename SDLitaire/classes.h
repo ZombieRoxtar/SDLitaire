@@ -29,7 +29,7 @@ struct point
 	int y;
 };
 
-static const enum SUITS
+enum SUITS
 {
 	ACES,
 	CLUBS,
@@ -38,7 +38,7 @@ static const enum SUITS
 	NUM_SUITS
 };
 
-static const enum FACES
+enum FACES
 {
 	ACE = 1,
 	JACK = 11,
