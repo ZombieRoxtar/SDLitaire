@@ -12,6 +12,10 @@
 
 int main(int argc, char* args[])
 {
+#if _DEBUG
+	SetConsoleTitle("Debug Output");
+#endif // DEBUG
+
 	/* Start up SDL and create the window */
 	LAssetManager gameManager;
 	if (!gameManager.Init())
@@ -49,7 +53,7 @@ int main(int argc, char* args[])
 		card[i]->setFile(NUM_CARDS - i);
 		card[i]->assocGame(gameManager);
 		card[i]->setTexture(deckTexture);
-		// Values here?
+		// Assign values here?
 	}
 
 	/* Initial scaling should happen as soon as possible */
@@ -79,7 +83,9 @@ int main(int argc, char* args[])
 	LTimer fpsTimer; /* The frames per second timer */
 
 	SDL_Color textColor = { 0, 0, 0, 255 }; /* Set text color */
-	std::stringstream timeText; /* In memory text stream */
+	std::stringstream timeText; /* In-memory text stream */
+
+	LCard* draggingCard = NULL; /* This is set in the render loop so it can render last */
 
 	/* Start counting frames per second */
 	int countedFrames = 0;
@@ -173,18 +179,20 @@ int main(int argc, char* args[])
 				{
 					if (tempCard = gameManager.getCard(i, j))
 					{
-						tempCard->render(gameRenderer, gameManager.getCardPlace(i));
 						if (!tempCard->isDragging())
 						{
-							tempCard = NULL;
+							tempCard->render(gameRenderer, gameManager.getCardPlace(i));
+						}
+						else
+						{
+							draggingCard = tempCard;
 						}
 					}
 				}
-				if (tempCard) /* Dragging card is rendered last */
-				{
-					/* or would be, but this code has no effect at all... */
-					tempCard->render(gameRenderer, gameManager.getCardPlace(tempCard->getRank()));
-				}
+			}
+			if (draggingCard) /* Dragging card is rendered last */
+			{
+				draggingCard->render(gameRenderer, gameManager.getCardPlace(draggingCard->getRank()));
 			}
 
 			fpsTexture->render(gameRenderer, (winW - fpsTexture->getWidth()), 0);
