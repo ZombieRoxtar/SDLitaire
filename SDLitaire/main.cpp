@@ -112,6 +112,8 @@ int main(int argc, char* args[])
 				card[i]->handleEvent(e);
 			}
 
+			gameManager.handleEvent(e);
+
 			/* Handle window events */
 			gameWindow->handleEvent(e);
 

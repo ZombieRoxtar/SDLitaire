@@ -465,8 +465,15 @@ void Card::move(int timeStep)
 
 void Card::flip()
 {
-	mFaceUp = true;
-	setTexture(mTable->getCardTexture(mFace.suit, mFace.value));
+	if (!mFaceUp)
+	{
+		setTexture(mTable->getCardTexture(mFace.suit, mFace.value));
+	}
+	else
+	{
+		setTexture(mTable->getCardBack());
+	}
+	mFaceUp = !mFaceUp;
 }
 
 void Card::setTexture(Texture* texture)
@@ -1002,14 +1009,8 @@ void AssetManager::cardDrop(Card* card)
 			mRanks[oldRank][oldFile - 1]->setClickability(true);
 		}
 	}
-	
-	/* Prevent cards from landing next to the deck unless they came from it */
-	int i = 1;
-	if (oldRank != 0)
-	{
-		i++;
-	}
-	for (; i < CARD_RANKS; i++)
+
+	for (int i = 0; i < CARD_RANKS; i++)
 	{
 		rankRect.x = mCardPlaces[i].x;
 		rankRect.y = mCardPlaces[i].y;
@@ -1061,11 +1062,18 @@ void AssetManager::handleEvent(SDL_Event& e)
 			/* Get mouse position */
 			int x, y;
 			SDL_GetMouseState(&x, &y);
-			//if (pointWithinBounds(x, y, mCardPlaces[0].x, mCardPlaces[0].y, mOutlineTexture.getWidth(), mOutlineTexture.getHeight()))
+			if (pointWithinBounds(x, y, mCardPlaces[0].x, mCardPlaces[0].y, mOutlineTexture.getWidth(), mOutlineTexture.getHeight()))
 			{
-				//if (!mRanks[0][0])
+				if (!mRanks[0][1])
 				{
-					printf("Click!\n"); /* STILL no detection of this?!*/
+					for (int i = 0; i <= NUM_CARDS; i++)
+					{
+						if (mRanks[1][i])
+						{
+							mRanks[1][i]->dealTo(0);
+							mRanks[1][i]->flip();
+						}
+					}
 				}
 			}
 		}
