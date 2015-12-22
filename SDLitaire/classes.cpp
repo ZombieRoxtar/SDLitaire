@@ -22,6 +22,23 @@
 /* To dump debug info in a repeating function */
 //bool justOnce = false;
 
+const char* NameOfSuit(int suit)
+{
+	const char* name = "Spades";
+	switch (suit)
+	{
+	case CLUBS:
+		name = "Clubs";
+		break;
+	case DIAMONDS:
+		name = "Diamonds";
+		break;
+	case HEARTS:
+		name = "Hearts";
+	}
+	return name;
+}
+
 bool pointWithinBounds(int test_x, int test_y, int pos_x, int pos_y, int width, int height)
 {
 	if (pos_x <= test_x)
@@ -74,12 +91,12 @@ bool testRectCollision(SDL_Rect &rect1, SDL_Rect &rect2)
 }
 
 
-LTimer::LTimer()
+Timer::Timer()
 {
 	stop(); /* set vars */
 }
 
-void LTimer::start()
+void Timer::start()
 {
 	/* Start the timer */
 	mStarted = true;
@@ -92,7 +109,7 @@ void LTimer::start()
 	mPausedTicks = 0;
 }
 
-void LTimer::stop()
+void Timer::stop()
 {
 	mPaused = false;
 	mStarted = false;
@@ -101,7 +118,7 @@ void LTimer::stop()
 	mPausedTicks = 0;
 }
 
-void LTimer::pause()
+void Timer::pause()
 {
 	/* If the timer is running and isn't already paused */
 	if (mStarted && !mPaused)
@@ -115,7 +132,7 @@ void LTimer::pause()
 	}
 }
 
-void LTimer::unpause()
+void Timer::unpause()
 {
 	/* If the timer is running and paused */
 	if (mStarted && mPaused)
@@ -131,7 +148,7 @@ void LTimer::unpause()
 	}
 }
 
-Uint32 LTimer::getTicks()
+Uint32 Timer::getTicks()
 {
 	/* The actual timer time */
 	Uint32 time = 0;
@@ -155,29 +172,29 @@ Uint32 LTimer::getTicks()
 	return time;
 }
 
-bool LTimer::isStarted()
+bool Timer::isStarted()
 {
 	/* Timer is running and paused or unpaused */
 	return mStarted;
 }
 
-bool LTimer::isPaused()
+bool Timer::isPaused()
 {
 	/* Timer is running and paused */
 	return mPaused && mStarted;
 }
 
 
-LTexture::LTexture()
+Texture::Texture()
 {
 	clear();
 }
-LTexture::~LTexture()
+Texture::~Texture()
 {
 	free();
 }
 
-bool LTexture::loadFromFile(std::string path, SDL_Renderer* renderer)
+bool Texture::loadFromFile(std::string path, SDL_Renderer* renderer)
 {
 	free(); /* Get rid of any preexisting texture */
 	SDL_Texture* newTexture = NULL;
@@ -205,7 +222,7 @@ bool LTexture::loadFromFile(std::string path, SDL_Renderer* renderer)
 	return mTexture != NULL;
 }
 
-bool LTexture::loadFromRenderedText(std::string textureText, SDL_Color textColor, TTF_Font* font, SDL_Renderer* renderer)
+bool Texture::loadFromRenderedText(std::string textureText, SDL_Color textColor, TTF_Font* font, SDL_Renderer* renderer)
 {
 	free(); /* Get rid of any preexisting texture */
 
@@ -235,7 +252,7 @@ bool LTexture::loadFromRenderedText(std::string textureText, SDL_Color textColor
 	return mTexture != NULL;
 }
 
-void LTexture::free()
+void Texture::free()
 {
 	/* Free texture if it exists */
 	if (mTexture)
@@ -245,42 +262,42 @@ void LTexture::free()
 	}
 }
 
-void LTexture::clear()
+void Texture::clear()
 {
 	mTexture = NULL;
 	mWidth = 0;
 	mHeight = 0;
 }
 
-void LTexture::setColor(Uint8 red, Uint8 green, Uint8 blue)
+void Texture::setColor(Uint8 red, Uint8 green, Uint8 blue)
 {
 	/* Modulate texture */
 	SDL_SetTextureColorMod(mTexture, red, green, blue);
 }
 
-void LTexture::setBlendMode(SDL_BlendMode blending)
+void Texture::setBlendMode(SDL_BlendMode blending)
 {
 	/* Set blending function */
 	SDL_SetTextureBlendMode(mTexture, blending);
 }
-void LTexture::setAlpha(Uint8 alpha)
+void Texture::setAlpha(Uint8 alpha)
 {
 	/* Modulate texture alpha */
 	SDL_SetTextureAlphaMod(mTexture, alpha);
 }
 
-void LTexture::setWidth(int width)
+void Texture::setWidth(int width)
 {
 	if (width != 0)
 		mWidth = abs(width);
 }
-void LTexture::setHeight(int height)
+void Texture::setHeight(int height)
 {
 	if (height != 0)
 		mHeight = abs(height);
 }
 
-void LTexture::aspectScale(int width, int height)
+void Texture::aspectScale(int width, int height)
 {
 	if (!height && !width)
 		return;
@@ -310,7 +327,7 @@ void LTexture::aspectScale(int width, int height)
 	}
 }
 
-void LTexture::render(SDL_Renderer* renderer, int x, int y,
+void Texture::render(SDL_Renderer* renderer, int x, int y,
 	SDL_Rect* clip, double angle, SDL_Point* center, SDL_RendererFlip flip)
 {
 	/* Set rendering space and render to screen */
@@ -328,25 +345,28 @@ void LTexture::render(SDL_Renderer* renderer, int x, int y,
 }
 
 
-LCard::LCard()
+Card::Card()
 {
 	mTexture = NULL;
-	mClickable = false;
-	mDragging = false;
-	mSliding = false;
-	mOffsetX = 0;
-	mOffsetY = 0;
-	mPosX = 0;
-	mPosY = 0;
-	mVelX = 0;
-	mVelY = 0;
-	mFile = 0;
-	mRank = 0;
+	mClickable =
+	mDragging =
+	mSliding =
+	mFaceUp = false;
+	mOffsetX =
+	mOffsetY =
+	mPosX =
+	mPosY =
+	mVelX =
+	mVelY =
+	mFile =
+	mRank =
 	mDestRank = 0;
+	mFace.suit = SPADES;
+	mFace.value = ACE;
 	mLastClickTime = GetCurrentTime();
 }
 
-void LCard::handleEvent(SDL_Event& e)
+void Card::handleEvent(SDL_Event& e)
 {
 	if (e.type == SDL_MOUSEMOTION)
 	{
@@ -370,16 +390,27 @@ void LCard::handleEvent(SDL_Event& e)
 			if (pointWithinBounds(x, y, mPosX, mPosY, mTexture->getWidth(), mTexture->getHeight()))
 			{
 				DWORD newClickTime = GetCurrentTime();
-				/* If mLastClickTime was 250 ticks ago (or less) */
-				if (newClickTime - DOUBLECLICK_DELAY <= mLastClickTime)
+				if (mFaceUp)
 				{
-					//Try to auto-move
+					/* If mLastClickTime was recent */
+					if (newClickTime - DOUBLECLICK_DELAY <= mLastClickTime)
+					{
+						//Try to auto-move
+					}
+					else /* Maybe this else should be like an if(!automove) ? */
+					{
+						mDragging = true;
+						mOffsetX = mPosX - x;
+						mOffsetY = mPosY - y;
+					}
 				}
-				else /* Maybe this else should be like an if(!automove) ? */
+				else
 				{
-					mDragging = true;
-					mOffsetX = mPosX - x;
-					mOffsetY = mPosY - y;
+					if (mRank == 0)
+					{
+						dealTo(1);
+					}
+					flip();
 				}
 				mLastClickTime = newClickTime;
 			}
@@ -401,7 +432,7 @@ void LCard::handleEvent(SDL_Event& e)
 	}
 }
 
-void LCard::move(int timeStep)
+void Card::move(int timeStep)
 {
 	if (mDestRank == mRank)
 	{
@@ -432,27 +463,32 @@ void LCard::move(int timeStep)
 	}
 }
 
-void LCard::setTexture(LTexture* texture)
+void Card::flip()
+{
+	mFaceUp = true;
+	setTexture(mTable->getCardTexture(mFace.suit, mFace.value));
+}
+
+void Card::setTexture(Texture* texture)
 {
 	mTexture = texture;
 }
 
-void LCard::render(SDL_Renderer* renderer, point* slot)
+void Card::render(SDL_Renderer* renderer, point* slot)
 {
-	if (!mDragging&&!mSliding)
+	if (!mDragging && !mSliding)
 	{
 		mPosX = slot->x;
 		mPosY = slot->y;
-		if (mRank != 0)
+		if (mRank > 5)
 		{
 			mPosY += (mFile * (mTexture->getHeight() / 10 ));
 		}
 	}
-
 	mTexture->render(renderer, mPosX, mPosY);
 }
 
-void LCard::setRank(int rank)
+void Card::setRank(int rank)
 {
 	if (0 > rank || rank > CARD_RANKS)
 	{
@@ -461,7 +497,7 @@ void LCard::setRank(int rank)
 	mRank = rank;
 	mDestRank = rank;
 }
-void LCard::setFile(int file)
+void Card::setFile(int file)
 {
 	if (0 > file || file > NUM_CARDS)
 	{
@@ -470,12 +506,21 @@ void LCard::setFile(int file)
 	mFile = file;
 }
 
-void LCard::setClickability(bool state)
+void Card::setClickability(bool state)
 {
 	mClickable = state;
 }
 
-void LCard::dealTo(int rank)
+void Card::setFace(cardFace face)
+{
+	if (((face.suit >= SPADES) && (face.suit < NUM_SUITS)) &&
+		((face.value >= ACE) && (face.value <= KING)))
+	{
+		mFace = face;
+	}
+}
+
+void Card::dealTo(int rank)
 {
 	if ((0 < rank) && (rank < CARD_RANKS))
 	{
@@ -497,7 +542,7 @@ void LCard::dealTo(int rank)
 	}
 }
 
-void LCard::setDestRank(int rank)
+void Card::setDestRank(int rank)
 {
 	if ((0 > rank) || (rank > CARD_RANKS))
 	{
@@ -506,19 +551,19 @@ void LCard::setDestRank(int rank)
 	mDestRank = rank;
 }
 
-void LCard::land()
+void Card::land()
 {
 	mTable->cardDrop(this);
 }
 
-void LCard::assocGame(LAssetManager& game)
+void Card::assocGame(AssetManager& game)
 {
 	mTable = &game;
 	mTable->registerCard(this);
 }
 
 
-LWindow::LWindow()
+Window::Window()
 {
 	mWindow = NULL;
 	mRenderer = NULL;
@@ -530,7 +575,7 @@ LWindow::LWindow()
 	mHeight = 0;
 }
 
-bool LWindow::init()
+bool Window::init()
 {
 	mWindow = SDL_CreateWindow(WINDOW_TITLE, SDL_WINDOWPOS_UNDEFINED,
 		SDL_WINDOWPOS_UNDEFINED, SCREEN_WIDTH, SCREEN_HEIGHT, SDL_WINDOW_SHOWN | SDL_WINDOW_RESIZABLE);
@@ -581,13 +626,13 @@ bool LWindow::init()
 	return success;
 }
 
-SDL_Renderer* LWindow::createRenderer()
+SDL_Renderer* Window::createRenderer()
 {
 	mRenderer = SDL_CreateRenderer(mWindow, -1, SDL_RENDERER_ACCELERATED);
 	return mRenderer;
 }
 
-void LWindow::handleEvent(SDL_Event& e)
+void Window::handleEvent(SDL_Event& e)
 {
 	if (e.type == SDL_WINDOWEVENT)
 	{
@@ -651,7 +696,7 @@ void LWindow::handleEvent(SDL_Event& e)
 	}
 }
 
-void LWindow::free()
+void Window::free()
 {
 	if (mRenderer != NULL)
 	{
@@ -668,34 +713,34 @@ void LWindow::free()
 	mHeight = 0;
 }
 
-int LWindow::getWidth()
+int Window::getWidth()
 {
 	return mWidth;
 }
-int LWindow::getHeight()
+int Window::getHeight()
 {
 	return mHeight;
 }
-bool LWindow::hasMouseFocus()
+bool Window::hasMouseFocus()
 {
 	return mMouseFocus;
 }
-bool LWindow::hasKeyboardFocus()
+bool Window::hasKeyboardFocus()
 {
 	return mKeyboardFocus;
 }
-bool LWindow::isMinimized()
+bool Window::isMinimized()
 {
 	return mMinimized;
 }
 
 
-LAssetManager::LAssetManager()
+AssetManager::AssetManager()
 {
 	Close(); /* Zero-init pointers */
 }
 
-LAssetManager::~LAssetManager()
+AssetManager::~AssetManager()
 {
 
 	/* Deallocate */
@@ -723,7 +768,7 @@ LAssetManager::~LAssetManager()
 	SDL_Quit();
 }
 
-bool LAssetManager::Init()
+bool AssetManager::Init()
 {
 	bool success = true;
 
@@ -788,7 +833,7 @@ bool LAssetManager::Init()
 	return success;
 }
 
-bool LAssetManager::LoadMedia()
+bool AssetManager::LoadMedia()
 {
 	bool success = true;
 
@@ -823,34 +868,55 @@ bool LAssetManager::LoadMedia()
 	/* Load outline texture */
 	if (!mOutlineTexture.loadFromFile("cards/outline.png", mRenderer))
 	{
-		printf("Failed to outline texture!\n");
+		printf("Failed to load outline texture!\n");
 		success = false;
+	}
+
+	/* Load face textures */
+	/* Init to back */
+	for (int i = 0; i < NUM_SUITS; i++)
+	{
+		for (int j = 0; j <= NUM_FACES; j++)
+		{
+			if (!mFaceTextures[i][j].loadFromFile("cards/outline.png", mRenderer))
+			{
+				printf("Failed to load outline texture!\n");
+				success = false;
+				break;
+			}
+		}
 	}
 
 	/*
 		Yes, I'm pretending that index 0 doesn't exist.
-		This way 1 = Ace, 2 = 2, ...
+		This way 1 = Ace, 2 = 2, ... (13 = King)
 	*/
-	int order[NUM_FACES];
-	int values[NUM_SUITS][NUM_FACES];
-	for (int i = 1; i < NUM_FACES; i++)
-	{
-		order[i] = i;
-	}
-	srand(unsigned(time(0)));
 	for (int i = 0; i < NUM_SUITS; i++)
 	{
-		std::random_shuffle(std::begin(order) + 1, std::end(order));
-		for (int j = 1; j < NUM_FACES; j++)
+		const std::string suitName (NameOfSuit(i));
+		for (int j = 1; j <= NUM_FACES; j++)
 		{
-			values[i][j] = order[j];
+			std::stringstream filename;
+			filename << "cards/" << suitName << "/" << j << ".png";
+			if (!mFaceTextures[i][j].loadFromFile(filename.str(), mRenderer))
+			{
+				printf("Failed to load texture for %i of %s!\n", j, suitName.c_str());
+				success = false;
+				break;
+			}
+			/* I don't understand the math either... */
+			mAllFaces[(i * NUM_FACES) + (j - 1)].suit = i;
+			mAllFaces[(i * NUM_FACES) + (j - 1)].value = j;
 		}
 	}
+
+	srand(unsigned(time(NULL)));
+	std::random_shuffle(std::begin(mAllFaces) + 1, std::end(mAllFaces));
 
 	return success;
 }
 
-void LAssetManager::Close()
+void AssetManager::Close()
 {
 	mRenderer = NULL;
 	mSDLWindow = NULL;
@@ -859,13 +925,13 @@ void LAssetManager::Close()
 	mSound = NULL;
 }
 
-void LAssetManager::clearRenderer()
+void AssetManager::clearRenderer()
 {
 	SDL_SetRenderDrawColor(mRenderer, RENDER_BGCOLOR);
 	SDL_RenderClear(mRenderer);
 }
 
-void LAssetManager::computeCardPlaces()
+void AssetManager::computeCardPlaces()
 {
 	int cardW = mDeckTexture.getWidth();
 	int cardH = mDeckTexture.getHeight();
@@ -909,7 +975,7 @@ void LAssetManager::computeCardPlaces()
 	mCardPlaces[12].x = mCardPlaces[4].x + margin_x + cardW;
 }
 
-void LAssetManager::cardDrop(LCard* card)
+void AssetManager::cardDrop(Card* card)
 {
 	int oldRank = card->getRank();
 	int oldFile = card->getFile();
@@ -937,7 +1003,13 @@ void LAssetManager::cardDrop(LCard* card)
 		}
 	}
 	
-	for (int i = 0; i < CARD_RANKS; i++)
+	/* Prevent cards from landing next to the deck unless they came from it */
+	int i = 1;
+	if (oldRank != 0)
+	{
+		i++;
+	}
+	for (; i < CARD_RANKS; i++)
 	{
 		rankRect.x = mCardPlaces[i].x;
 		rankRect.y = mCardPlaces[i].y;
@@ -966,7 +1038,36 @@ void LAssetManager::cardDrop(LCard* card)
 	}
 }
 
-void LAssetManager::registerCard(LCard* card)
+void AssetManager::registerCard(Card* card)
 {
 	mRanks[card->getRank()][card->getFile()] = card;
+}
+
+Texture* AssetManager::getCardTexture(int suit, int value)
+{
+	if ((suit < SPADES) || (suit >= NUM_SUITS))
+		suit = SPADES;
+	if ((value < ACE) || (value > NUM_FACES))
+		value = ACE;
+	return& mFaceTextures[suit][value];
+}
+
+void AssetManager::handleEvent(SDL_Event& e)
+{
+	if (e.type == SDL_MOUSEBUTTONDOWN)
+	{
+		if (e.button.button == SDL_BUTTON_LEFT)
+		{
+			/* Get mouse position */
+			int x, y;
+			SDL_GetMouseState(&x, &y);
+			//if (pointWithinBounds(x, y, mCardPlaces[0].x, mCardPlaces[0].y, mOutlineTexture.getWidth(), mOutlineTexture.getHeight()))
+			{
+				//if (!mRanks[0][0])
+				{
+					printf("Click!\n"); /* STILL no detection of this?!*/
+				}
+			}
+		}
+	}
 }

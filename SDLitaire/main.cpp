@@ -3,7 +3,6 @@
 */
 
 #include "classes.h"
-#include <sstream>
 
 #define EXIT_FAILED_INIT 2
 #define EXIT_FAILED_FILES 3
@@ -17,43 +16,48 @@ int main(int argc, char* args[])
 #endif // DEBUG
 
 	/* Start up SDL and create the window */
-	LAssetManager gameManager;
+	AssetManager gameManager;
 	if (!gameManager.Init())
 	{
-		printf("Failed to initialize!\n");
+#if _DEBUG
+		system("pause");
+#endif // DEBUG
 		return EXIT_FAILED_INIT;
 	}
+
 	if (!gameManager.LoadMedia()) /* Load Media */
 	{
-		printf("Failed to load media!\n");
 		gameManager.Close(); /* Try to free resources and close SDL */
+#if _DEBUG
+		system("pause");
+#endif // DEBUG
 		return EXIT_FAILED_FILES;
 	}
 
 	bool quit = false; /* Loop flag */
 
-	LWindow* gameWindow = gameManager.getWindow();
+	Window* gameWindow = gameManager.getWindow();
 	SDL_Renderer* gameRenderer = gameManager.getRenderer();
 	TTF_Font* font = gameManager.getFont();
-	LTexture* fpsTexture = gameManager.getFPSTexture();
-	LTexture* backgroundTexture = gameManager.getBackground();
-	LTexture* deckTexture = gameManager.getCardBack();
-	LTexture* outlineTexture = gameManager.getCardOutline();
+	Texture* fpsTexture = gameManager.getFPSTexture();
+	Texture* backgroundTexture = gameManager.getBackground();
+	Texture* deckTexture = gameManager.getCardBack();
+	Texture* outlineTexture = gameManager.getCardOutline();
 
 	/* May be faster to store these */
 	int winH = gameWindow->getHeight();
 	int winW = gameWindow->getWidth();
 
 	/* The Cards */
-	LCard* card[NUM_CARDS];
+	Card* card[NUM_CARDS];
 
 	for (int i = 0; i < NUM_CARDS; i++)
 	{
-		card[i] = new LCard;
+		card[i] = new Card;
 		card[i]->setFile(NUM_CARDS - i);
 		card[i]->assocGame(gameManager);
 		card[i]->setTexture(deckTexture);
-		// Assign values here?
+		card[i]->setFace(gameManager.getFace(i)); /* Face values are shuffled earlier */
 	}
 
 	/* Initial scaling should happen as soon as possible */
@@ -79,13 +83,13 @@ int main(int argc, char* args[])
 	SDL_Event e; /* Event handler */
 	SDL_EventState(SDL_SYSWMEVENT, SDL_ENABLE); /* Allow standard window events to process */
 
-	LTimer stepTimer; /* Keeps track of time between card steps */
-	LTimer fpsTimer; /* The frames per second timer */
+	Timer stepTimer; /* Keeps track of time between card steps */
+	Timer fpsTimer; /* The frames per second timer */
 
 	SDL_Color textColor = { 0, 0, 0, 255 }; /* Set text color */
 	std::stringstream timeText; /* In-memory text stream */
 
-	LCard* draggingCard = NULL; /* This is set in the render loop so it can render last */
+	Card* draggingCard = NULL; /* This is set in the render loop so it can render last */
 
 	/* Start counting frames per second */
 	int countedFrames = 0;
@@ -159,6 +163,13 @@ int main(int argc, char* args[])
 			backgroundTexture->setHeight(winH);
 			deckTexture->aspectScale(winW / CARD_SCALE, winH / CARD_SCALE);
 			outlineTexture->aspectScale(winW / CARD_SCALE, winH / CARD_SCALE);
+			for (int i = 0; i < NUM_SUITS; i++)
+			{
+				for (int j = 1; j <= NUM_FACES; j++)
+				{
+					gameManager.getCardTexture(i, j)->aspectScale(winW / CARD_SCALE, winH / CARD_SCALE);
+				}
+			}
 
 			gameManager.computeCardPlaces();
 
@@ -166,7 +177,7 @@ int main(int argc, char* args[])
 
 			for (int i = 0; i < CARD_RANKS; i++)
 			{
-				if (i != 1)
+				if (i != 1) /* No outline for the discard pile */
 				{
 					outlineTexture->render(gameRenderer, gameManager.getCardPlace(i)->x, gameManager.getCardPlace(i)->y);
 				}
@@ -174,7 +185,7 @@ int main(int argc, char* args[])
 
 			for (int i = 0; i < CARD_RANKS; i++) /* BOOM! Implicit Z ordering */
 			{
-				LCard* tempCard = NULL;
+				Card* tempCard = nullptr;
 				for (int j = 0; j < NUM_CARDS; j++)
 				{
 					if (tempCard = gameManager.getCard(i, j))

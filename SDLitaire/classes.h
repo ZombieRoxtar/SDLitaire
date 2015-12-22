@@ -6,8 +6,9 @@
 
 #include <SDL_ttf.h>
 #include <SDL_mixer.h>
-#include <string>
 #include <SDL_SysWM.h>
+#include <string>
+#include <sstream>
 
 #define NUM_CARDS 52
 #define FIRST_DEAL 28
@@ -17,11 +18,11 @@
 
 #define ID_EXIT 1
 
-class LTimer;
-class LTexture;
-class LCard;
-class LWindow;
-class LAssetManager;
+class Timer;
+class Texture;
+class Card;
+class Window;
+class AssetManager;
 
 struct point
 {
@@ -29,9 +30,15 @@ struct point
 	int y;
 };
 
+struct cardFace
+{
+	int suit;
+	int value;
+};
+
 enum SUITS
 {
-	ACES,
+	SPADES,
 	CLUBS,
 	DIAMONDS,
 	HEARTS,
@@ -44,14 +51,16 @@ enum FACES
 	JACK = 11,
 	QUEEN,
 	KING,
-	NUM_FACES
+	NUM_FACES = KING
 };
 
+const char* NameOfSuit(int suit);
+
 /* The application-time based timer */
-class LTimer
+class Timer
 {
 public:
-	LTimer();
+	Timer();
 
 	/* The various clock actions */
 	void start();
@@ -79,11 +88,11 @@ private:
 };
 
 /* Texture wrapper class */
-class LTexture
+class Texture
 {
 public:
-	LTexture();
-	~LTexture();
+	Texture();
+	~Texture();
 
 	/* Loads image at specified path */
 	bool loadFromFile(std::string path, SDL_Renderer* renderer);
@@ -130,40 +139,43 @@ private:
 };
 
 /* The Cards */
-class LCard
+class Card
 {
 public:
-	/* Velocity */
+	/* Cards' Velocity */
 	static const int CARD_VEL = 2;
 
 	/* Initializes the variables */
-	LCard();
+	Card();
 
-	/* Assign texture */
-	void setTexture(LTexture* texture);
+	/* Assign Texture */
+	void setTexture(Texture* texture);
 
 	void handleEvent(SDL_Event& e);
 
 	void move(int timeStep);
 
+	void flip();
+
 	/* Shows the card on the screen */
 	void render(SDL_Renderer* renderer, point* rank);
 
 	void setRank(int rank);
-
 	void setFile(int file);
+
+	void setFace(cardFace face);
 
 	void setClickability(bool state);
 
 	void dealTo( int rank );
-
 	void setDestRank(int rank);
 
 	void land();
 
-	void assocGame(LAssetManager& game);
+	void assocGame(AssetManager& game);
 
 	bool getClickability() { return mClickable; }
+	bool getFlipState() { return mFaceUp; }
 	bool isDragging() { return mDragging; }
 	bool isSliding() { return mSliding; }
 	int getRank() { return mRank; }
@@ -171,8 +183,13 @@ public:
 	int getFile() { return mFile; }
 	int getX() { return mPosX; }
 	int getY() { return mPosY; }
+	cardFace getFace() { return mFace; }
 
 private:
+	/* Game state */
+	bool mFaceUp; /* Flip state */
+	cardFace mFace; /* suit and value */
+
 	/* The X,Y Position and Spot on the Table*/
 	int mPosX, mPosY, mRank, mFile;
 	/* For sliding */
@@ -186,16 +203,16 @@ private:
 	DWORD mLastClickTime;
 
 	/* The Texture */
-	LTexture* mTexture;
+	Texture* mTexture;
 
-	LAssetManager* mTable;
+	AssetManager* mTable;
 };
 
 /* Window Wrapper Class */
-class LWindow
+class Window
 {
 public:
-	LWindow();
+	Window();
 
 	/* Creates window */
 	bool init();
@@ -238,46 +255,51 @@ private:
 		mMinimized;
 };
 
-/* Manages Textures and SDL */
-class LAssetManager
+/* Manages Cards, Textures, SDL, and more */
+class AssetManager
 {
 public:
-	LAssetManager();
-	~LAssetManager();
+	AssetManager();
+	~AssetManager();
 	bool Init();
 	bool LoadMedia();
 	void Close();
 	void clearRenderer();
 	void computeCardPlaces();
-	void cardDrop(LCard* card);
-	void registerCard(LCard* card);
+	void cardDrop(Card* card);
+	void registerCard(Card* card);
+	Texture* getCardTexture(int suit, int value);
+	void handleEvent(SDL_Event& e);
 
-	LWindow* getWindow() { return& mWindow; }
+	Window* getWindow() { return& mWindow; }
 	SDL_Renderer* getRenderer() { return mRenderer; }
-	TTF_Font* getFont() { return mFont; }
 	Mix_Chunk* getSound() { return mSound; }
-	LTexture* getBackground() { return& mBackgroundTexture; }
-	LTexture* getFPSTexture() { return& mFPSTextTexture; }
-	LTexture* getCardBack() { return& mDeckTexture; }
-	LTexture* getCardOutline() { return& mOutlineTexture; }
+	TTF_Font* getFont() { return mFont; }
+	Texture* getBackground() { return& mBackgroundTexture; }
+	Texture* getFPSTexture() { return& mFPSTextTexture; }
+	Texture* getCardBack() { return& mDeckTexture; }
+	Texture* getCardOutline() { return&mOutlineTexture; }
 	point* getCardPlace(int place) { return& mCardPlaces[place]; }
-	LCard* getCard(int rank, int file) { return mRanks[rank][file]; }
+	Card* getCard(int rank, int file) { return mRanks[rank][file]; }
+	cardFace getFace(int index) { return mAllFaces[index]; }
 
 private:
 	/* Window data */
-	LWindow mWindow;
+	Window mWindow;
 	SDL_Window* mSDLWindow;
 	SDL_Renderer* mRenderer;
 	SDL_Surface* mIconSurface; /* Will be the window icon */
 	/* Game Data */
 	TTF_Font* mFont; /* Main Font */
 	Mix_Chunk* mSound; /* Example Sound Effect */
-	LTexture mBackgroundTexture; /* Backdrop (Table) */
-	LTexture mFPSTextTexture; /* Rendered FPS Count */
-	LTexture mDeckTexture; /* The Card Back */
-	LTexture mOutlineTexture; /* The Card Outline */
+	Texture mBackgroundTexture; /* Backdrop (Table) */
+	Texture mFPSTextTexture; /* Rendered FPS Count */
+	Texture mDeckTexture; /* The Card Back */
+	Texture mOutlineTexture; /* The Card Outline */
+	Texture mFaceTextures[NUM_SUITS][NUM_FACES]; /* The Card Faces */
 	point mCardPlaces[CARD_RANKS]; /* Card Holding Spots */
-	LCard* mRanks[CARD_RANKS][NUM_CARDS]; /* The card in each position */
+	Card* mRanks[CARD_RANKS][NUM_CARDS]; /* The card in each position */
+	cardFace mAllFaces[NUM_CARDS]; /* All possible card faces values */
 };
 
 #endif /* _CLASSES_H */
