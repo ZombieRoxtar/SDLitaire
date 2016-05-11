@@ -341,6 +341,13 @@ void Texture::render(SDL_Renderer* renderer, int x, int y,
 	}
 
 	/* Render to screen */
+	//* Hack!
+	if (mTexture < (void*)0x40000)
+	{
+		printf("ATTEMPTED TO RENDER AN UNKNOWN TEXTURE!\n");
+		return;
+	}
+	//*/
 	SDL_RenderCopyEx(renderer, mTexture, clip, &renderQuad, angle, center, flip);
 }
 
@@ -885,9 +892,9 @@ bool AssetManager::LoadMedia()
 	{
 		for (int j = 0; j <= NUM_FACES; j++)
 		{
-			if (!mFaceTextures[i][j].loadFromFile("cards/outline.png", mRenderer))
+			if (!mFaceTextures[i][j].loadFromFile("cards/back.png", mRenderer))
 			{
-				printf("Failed to load outline texture!\n");
+				printf("Failed to load deck texture!\n");
 				success = false;
 				break;
 			}

@@ -296,7 +296,7 @@ private:
 	Texture mFPSTextTexture; /* Rendered FPS Count */
 	Texture mDeckTexture; /* The Card Back */
 	Texture mOutlineTexture; /* The Card Outline */
-	Texture mFaceTextures[NUM_SUITS][NUM_FACES]; /* The Card Faces */
+	Texture mFaceTextures[NUM_SUITS][NUM_FACES + 1]; /* The Card Faces. Index 0 will be ignored to make faces more logical. */
 	point mCardPlaces[CARD_RANKS]; /* Card Holding Spots */
 	Card* mRanks[CARD_RANKS][NUM_CARDS]; /* The card in each position */
 	cardFace mAllFaces[NUM_CARDS]; /* All possible card faces values */
