@@ -4,10 +4,13 @@
 
 #include "classes.h"
 
+/* Exit code 0 is success and 1 is a generic failure */
 #define EXIT_FAILED_INIT 2
 #define EXIT_FAILED_FILES 3
 
 #define CARD_SCALE 4
+
+#define TEXT_COLOR 0, 0, 0 /* Black */
 
 int main(int argc, char* args[])
 {
@@ -68,17 +71,19 @@ int main(int argc, char* args[])
 	/* Deal Cards */
 	int rank = 6; /* Rank 6 is the first one in the second row */
 	int file = 1;
+	card[0]->flip(); //FIXME: Write a delayed flipper
 	for (int i = 0; i < FIRST_DEAL; i++)
 	{
 		if (rank == CARD_RANKS)
 		{
 			rank = 6 + file;
 			file++;
+			card[i]->flip(); /* When a new row starts, flip the first card */
 		}
 		card[i]->dealTo(rank);
 		rank++;
 	}
-	card[FIRST_DEAL + 1]->setClickability(true); /* Top Deck Card */
+	card[FIRST_DEAL]->setClickability(true); /* Top Deck Card */
 
 	SDL_Event e; /* Event handler */
 	SDL_EventState(SDL_SYSWMEVENT, SDL_ENABLE); /* Allow standard window events to process */
@@ -86,14 +91,15 @@ int main(int argc, char* args[])
 	Timer stepTimer; /* Keeps track of time between card steps */
 	Timer fpsTimer; /* The frames per second timer */
 
-	SDL_Color textColor = { 0, 0, 0, 255 }; /* Set text color */
+	SDL_Color textColor = { TEXT_COLOR }; /* Set text color */
 	std::stringstream timeText; /* In-memory text stream */
 
 	Card* draggingCard = NULL; /* This is set in the render loop so it can render last */
 
 	/* Start counting frames per second */
 	int countedFrames = 0;
-	fpsTimer.start();
+	if (gameManager.options()->showFPS)
+		fpsTimer.start();
 
 	/* While it's not quiting time */
 	while (!quit)
@@ -134,10 +140,12 @@ int main(int argc, char* args[])
 
 		/* Calculate and correct fps */
 		float avgFPS = countedFrames / (fpsTimer.getTicks() / 1000.f);
-
-		/* Set FPS text to be rendered */
-		timeText.str("");
-		timeText << "FPS: " << roundf(avgFPS);
+		if (gameManager.options()->showFPS)
+		{
+			/* Set FPS text to be rendered */
+			timeText.str("");
+			timeText << "FPS: " << roundf(avgFPS);
+		}
 
 		/* Object Processing */
 		for (int i = 0; i < NUM_CARDS; i++)
@@ -153,10 +161,11 @@ int main(int argc, char* args[])
 			gameManager.clearRenderer(); /* Clear screen */
 
 			/* Create FPS text texture*/
-			if (!fpsTexture->loadFromRenderedText(timeText.str().c_str(), textColor, font, gameRenderer))
-			{
-				printf("Unable to render FPS texture!\n");
-			}
+			if (gameManager.options()->showFPS)
+				if (!fpsTexture->loadFromRenderedText(timeText.str().c_str(), textColor, font, gameRenderer))
+				{
+					printf("Unable to render FPS texture!\n");
+				}
 
 			winH = gameWindow->getHeight();
 			winW = gameWindow->getWidth();
@@ -208,10 +217,13 @@ int main(int argc, char* args[])
 				draggingCard->render(gameRenderer, gameManager.getCardPlace(draggingCard->getRank()));
 			}
 
-			fpsTexture->render(gameRenderer, (winW - fpsTexture->getWidth()), 0);
+			if (gameManager.options()->showFPS)
+			{
+				fpsTexture->render(gameRenderer, (winW - fpsTexture->getWidth()), 0);
+				countedFrames++;
+			}
 
 			SDL_RenderPresent(gameRenderer); /* Update screen */
-			countedFrames++;
 		}
 		Sleep(0);
 	}

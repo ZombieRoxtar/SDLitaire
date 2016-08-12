@@ -11,7 +11,7 @@
 #include <sstream>
 
 #define NUM_CARDS 52
-#define FIRST_DEAL 28
+#define FIRST_DEAL 28 /* This is the number of cards dealt at the start of the game. */
 
 #define SUIT_SIZE 13
 #define CARD_RANKS 13
@@ -52,6 +52,13 @@ enum FACES
 	QUEEN,
 	KING,
 	NUM_FACES = KING
+};
+
+/* Contains all of the game's configuration options */
+struct optionSet
+{
+	bool animation = false; /* Animate Card Motion */
+	bool showFPS = true; /* Display the FPS Counter */
 };
 
 const char* NameOfSuit(int suit);
@@ -280,8 +287,10 @@ public:
 	Texture* getCardBack() { return& mDeckTexture; }
 	Texture* getCardOutline() { return&mOutlineTexture; }
 	point* getCardPlace(int place) { return& mCardPlaces[place]; }
+	int stackedCards(int place) { return mHeldCards[place]; }
 	Card* getCard(int rank, int file) { return mRanks[rank][file]; }
 	cardFace getFace(int index) { return mAllFaces[index]; }
+	optionSet* options() { return &mOptions; }
 
 private:
 	/* Window data */
@@ -298,8 +307,10 @@ private:
 	Texture mOutlineTexture; /* The Card Outline */
 	Texture mFaceTextures[NUM_SUITS][NUM_FACES + 1]; /* The Card Faces. Index 0 will be ignored to make faces more logical. */
 	point mCardPlaces[CARD_RANKS]; /* Card Holding Spots */
+	int mHeldCards[CARD_RANKS]; /* The number of cards in each spot */
 	Card* mRanks[CARD_RANKS][NUM_CARDS]; /* The card in each position */
-	cardFace mAllFaces[NUM_CARDS]; /* All possible card faces values */
+	cardFace mAllFaces[NUM_CARDS]; /* All possible card face values */
+	optionSet mOptions; /* Game Options */
 };
 
 #endif /* _CLASSES_H */

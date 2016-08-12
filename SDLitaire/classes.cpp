@@ -19,9 +19,6 @@
 
 #define DOUBLECLICK_DELAY 250
 
-/* To dump debug info in a repeating function */
-//bool justOnce = false;
-
 const char* NameOfSuit(int suit)
 {
 	const char* name = "Spades";
@@ -271,7 +268,7 @@ void Texture::clear()
 
 void Texture::setColor(Uint8 red, Uint8 green, Uint8 blue)
 {
-	/* Modulate texture */
+	/* Modulate texture color */
 	SDL_SetTextureColorMod(mTexture, red, green, blue);
 }
 
@@ -356,18 +353,18 @@ Card::Card()
 {
 	mTexture = NULL;
 	mClickable =
-	mDragging =
-	mSliding =
-	mFaceUp = false;
+		mDragging =
+		mSliding =
+		mFaceUp = false;
 	mOffsetX =
 	mOffsetY =
 	mPosX =
-	mPosY =
-	mVelX =
-	mVelY =
-	mFile =
-	mRank =
-	mDestRank = 0;
+		mPosY =
+		mVelX =
+		mVelY =
+		mFile =
+		mRank =
+		mDestRank = 0;
 	mFace.suit = SPADES;
 	mFace.value = ACE;
 	mLastClickTime = GetCurrentTime();
@@ -446,18 +443,36 @@ void Card::move(int timeStep)
 		return;
 	}
 
-	bool xCond = mPosX != mTable->getCardPlace(mDestRank)->x;
-	bool yCond = mPosY != mTable->getCardPlace(mDestRank)->y;
+	/* FIXME: Is there any y-drift when the DestRank fills up? */
+	point* dest = mTable->getCardPlace(mDestRank);
 
-	if (xCond)
+	bool xCond = mPosX != dest->x;
+	bool yCond = mPosY != dest->y;
+
+	/*
+		FIXME:BUGBUG: Sometimes cards miss and fly forever
+			Moving in big steps with little tolerance?
+	*/
+	if (mTable->options()->animation)
 	{
-		mPosX += mVelX * timeStep;
+		if (xCond)
+		{
+			mPosX += mVelX * timeStep;
+		}
+
+		if (yCond)
+		{
+			mPosY += mVelY * timeStep;
+		}
+	}
+	else
+	{
+		mPosX = dest->x;
+		mPosY = dest->y;
 	}
 
-	if (yCond)
-	{
-		mPosY += mVelY * timeStep;
-	}
+	xCond = mPosX != dest->x;
+	yCond = mPosY != dest->y;
 
 	if (yCond || xCond)
 	{
@@ -536,21 +551,24 @@ void Card::setFace(cardFace face)
 
 void Card::dealTo(int rank)
 {
-	if ((0 < rank) && (rank < CARD_RANKS))
+	if ((0 <= rank) && (rank < CARD_RANKS))
 	{
 		if (mRank != rank)
 		{
 			mDestRank = rank;
 			mSliding = true;
-			mVelY = CARD_VEL;
-			mVelX = CARD_VEL;
-			if (mTable->getCardPlace(rank)->y < mTable->getCardPlace(mRank)->y)
+			if (mTable->options()->animation)
 			{
-				mVelY *= -1;
-			}
-			if (mTable->getCardPlace(rank)->x < mTable->getCardPlace(mRank)->x)
-			{
-				mVelX *= -1;
+				mVelY = CARD_VEL;
+				mVelX = CARD_VEL;
+				if (mTable->getCardPlace(rank)->y < mTable->getCardPlace(mRank)->y) //BUGBUG: Head a little further down for each card that is already there
+				{
+					mVelY *= -1;
+				}
+				if (mTable->getCardPlace(rank)->x < mTable->getCardPlace(mRank)->x)
+				{
+					mVelX *= -1;
+				}
 			}
 		}
 	}
@@ -751,12 +769,18 @@ bool Window::isMinimized()
 
 AssetManager::AssetManager()
 {
-	Close(); /* Zero-init pointers */
+	Close(); /* Null init pointers */
+
+	/* The whole deck is in the draw pile for the first tick. */
+	mHeldCards[0] = 52;
+	for (int i = 1; i < CARD_RANKS; i++)
+	{
+		mHeldCards[i] = 0;
+	}
 }
 
 AssetManager::~AssetManager()
 {
-
 	/* Deallocate */
 	mFPSTextTexture.free();
 	mDeckTexture.free();
@@ -925,7 +949,8 @@ bool AssetManager::LoadMedia()
 	}
 
 	srand(unsigned(time(NULL)));
-	std::random_shuffle(std::begin(mAllFaces) + 1, std::end(mAllFaces));
+	/* Serious (new) C++ magic */
+	std::random_shuffle(std::begin(mAllFaces), std::end(mAllFaces));
 
 	return success;
 }
@@ -997,16 +1022,13 @@ void AssetManager::cardDrop(Card* card)
 	SDL_Rect cardRect;
 	SDL_Rect rankRect;
 
-	int cardW = mDeckTexture.getWidth();
-	int cardH = mDeckTexture.getHeight();
-
-	cardRect.w = cardW;
-	cardRect.h = cardH;
+	cardRect.w = mDeckTexture.getWidth();
+	cardRect.h = mDeckTexture.getHeight();
 	cardRect.x = card->getX();
 	cardRect.y = card->getY();
 
-	rankRect.w = cardW;
-	rankRect.h = cardH;
+	rankRect.w = cardRect.w;
+	rankRect.h = cardRect.h;
 	
 	mRanks[oldRank][oldFile] = nullptr;
 	if (oldFile > 0)
@@ -1019,6 +1041,7 @@ void AssetManager::cardDrop(Card* card)
 
 	for (int i = 0; i < CARD_RANKS; i++)
 	{
+		/* FIXME: Each rank's "drop zone" does not expand down as it fills */
 		rankRect.x = mCardPlaces[i].x;
 		rankRect.y = mCardPlaces[i].y;
 
@@ -1028,9 +1051,11 @@ void AssetManager::cardDrop(Card* card)
 			{
 				if (!mRanks[i][j])
 				{
+					--mHeldCards[card->getRank()];
 					card->setRank(i);
 					card->setFile(j);
 					mRanks[i][j] = card;
+					mHeldCards[card->getRank()]++;
 					if (j > 0)
 					{
 						if (mRanks[i][j - 1])
@@ -1071,9 +1096,10 @@ void AssetManager::handleEvent(SDL_Event& e)
 			SDL_GetMouseState(&x, &y);
 			if (pointWithinBounds(x, y, mCardPlaces[0].x, mCardPlaces[0].y, mOutlineTexture.getWidth(), mOutlineTexture.getHeight()))
 			{
-				if (!mRanks[0][1])
+				if (!mRanks[0][0])
 				{
-					for (int i = 0; i <= NUM_CARDS; i++)
+					//This loop runs backward to put the draw pile back like it was.
+					for (int i = NUM_CARDS; i >= 0; i--)
 					{
 						if (mRanks[1][i])
 						{
