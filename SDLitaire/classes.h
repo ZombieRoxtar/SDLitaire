@@ -1,5 +1,6 @@
 /*
 	This awesome code was written by Chris Roxby.
+	This project was created using SDL.
 */
 #ifndef _CLASSES_H
 #define _CLASSES_H
@@ -13,10 +14,10 @@
 #define NUM_CARDS 52
 #define FIRST_DEAL 28 /* This is the number of cards dealt at the start of the game. */
 
-#define SUIT_SIZE 13
-#define CARD_RANKS 13
+#define CARD_RANKS 13 /* The number of slots on the table */
 
-#define ID_EXIT 1
+/* Menu Choices */
+#define MENU_EXIT 1
 
 class Timer;
 class Texture;
@@ -26,14 +27,12 @@ class AssetManager;
 
 struct point
 {
-	int x;
-	int y;
+	int x,y;
 };
 
 struct cardFace
 {
-	int suit;
-	int value;
+	int suit,value;
 };
 
 enum SUITS
@@ -51,7 +50,7 @@ enum FACES
 	JACK = 11,
 	QUEEN,
 	KING,
-	NUM_FACES = KING
+	NUM_FACES = KING /* Card Values per Suit */
 };
 
 /* Contains all of the game's configuration options */
@@ -61,7 +60,7 @@ struct optionSet
 	bool showFPS = true; /* Display the FPS Counter */
 };
 
-const char* NameOfSuit(int suit);
+const char* nameOfSuit(int suit);
 
 /* The application-time based timer */
 class Timer
@@ -91,7 +90,7 @@ private:
 
 	/* The timer status */
 	bool mStarted,
-		mPaused;
+		 mPaused;
 };
 
 /* Texture wrapper class */

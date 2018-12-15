@@ -1,5 +1,6 @@
 /*
 	This awesome code was written by Chris Roxby.
+	This project was created using SDL.
 */
 
 #include "classes.h"
@@ -12,6 +13,13 @@
 
 #define TEXT_COLOR 0, 0, 0 /* Black */
 
+void debugPause()
+{
+#if _DEBUG
+	system("pause");
+#endif // DEBUG
+}
+
 int main(int argc, char* args[])
 {
 #if _DEBUG
@@ -22,18 +30,12 @@ int main(int argc, char* args[])
 	AssetManager gameManager;
 	if (!gameManager.Init())
 	{
-#if _DEBUG
-		system("pause");
-#endif // DEBUG
 		return EXIT_FAILED_INIT;
 	}
 
 	if (!gameManager.LoadMedia()) /* Load Media */
 	{
 		gameManager.Close(); /* Try to free resources and close SDL */
-#if _DEBUG
-		system("pause");
-#endif // DEBUG
 		return EXIT_FAILED_FILES;
 	}
 
@@ -60,7 +62,7 @@ int main(int argc, char* args[])
 		card[i]->setFile(NUM_CARDS - i);
 		card[i]->assocGame(gameManager);
 		card[i]->setTexture(deckTexture);
-		card[i]->setFace(gameManager.getFace(i)); /* Face values are shuffled earlier */
+		card[i]->setFace(gameManager.getFace(i)); /* Face values were shuffled earlier */
 	}
 
 	/* Initial scaling should happen as soon as possible */
@@ -71,7 +73,7 @@ int main(int argc, char* args[])
 	/* Deal Cards */
 	int rank = 6; /* Rank 6 is the first one in the second row */
 	int file = 1;
-	card[0]->flip(); //FIXME: Write a delayed flipper
+	card[0]->flip(); /* Flip the first card while it flys to 6,0 */
 	for (int i = 0; i < FIRST_DEAL; i++)
 	{
 		if (rank == CARD_RANKS)
@@ -130,7 +132,7 @@ int main(int argc, char* args[])
 				{
 					switch (e.syswm.msg->msg.win.wParam)
 					{
-					case ID_EXIT:
+					case MENU_EXIT:
 						quit = true;
 						break;
 					}

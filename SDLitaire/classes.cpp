@@ -1,39 +1,40 @@
 /*
 	This awesome code was written by Chris Roxby.
+	This project was created using SDL.
 */
 
-#include <SDL.h>
 #include "classes.h"
+#include <SDL.h>
 #include <SDL_image.h>
 #include <Windows.h>
 #include <algorithm>
 #include <ctime>
 
+#define PROG_NAME "SDLitaire"
+#define GAME_VERSION "0.01.00"
+
 /* Window Defaults */
-#define WINDOW_TITLE "SDLitaire"
+#define WINDOW_TITLE PROG_NAME
 #define SCREEN_WIDTH 1600
 #define SCREEN_HEIGHT 900
 
-#define TRANSPARENT_COLOR 0xFF, 0, 0xFF
-#define RENDER_BGCOLOR 0x0, 0x64, 0x0, 0xFF /* The color for areas with no objects */
+#define TRANSPARENT_COLOR 0xFF, 0, 0xFF /* Purple is rendered clear. */
+#define RENDER_BGCOLOR 0x0, 0x64, 0x0, 0xFF /* Areas with no objects are medium-green. */
 
 #define DOUBLECLICK_DELAY 250
 
-const char* NameOfSuit(int suit)
+const char* nameOfSuit(int suit)
 {
-	const char* name = "Spades";
 	switch (suit)
 	{
 	case CLUBS:
-		name = "Clubs";
-		break;
+		return "Clubs";
 	case DIAMONDS:
-		name = "Diamonds";
-		break;
+		return "Diamonds";
 	case HEARTS:
-		name = "Hearts";
+		return "Hearts";
 	}
-	return name;
+	return "Spades";
 }
 
 bool pointWithinBounds(int test_x, int test_y, int pos_x, int pos_y, int width, int height)
@@ -198,7 +199,7 @@ bool Texture::loadFromFile(std::string path, SDL_Renderer* renderer)
 	SDL_Surface* loadedSurface = IMG_Load(path.c_str());
 	if (!loadedSurface)
 	{
-		printf("Unable to load image %s! SDL_image Error: %s\n", path.c_str(), IMG_GetError());
+		printf("This image could not be loaded: %s\nSDL_image Error: %s\n", path.c_str(), IMG_GetError());
 	}
 	else
 	{
@@ -206,7 +207,7 @@ bool Texture::loadFromFile(std::string path, SDL_Renderer* renderer)
 		newTexture = SDL_CreateTextureFromSurface(renderer, loadedSurface); /* Create texture from surface pixels */
 		if (!newTexture)
 		{
-			printf("Unable to create texture from %s! SDL Error: %s\n", path.c_str(), SDL_GetError());
+			printf("A texture could not be created from %s\nSDL Error: %s\n", path.c_str(), SDL_GetError());
 		}
 		else
 		{
@@ -227,7 +228,7 @@ bool Texture::loadFromRenderedText(std::string textureText, SDL_Color textColor,
 	SDL_Surface* textSurface = TTF_RenderText_Solid(font, textureText.c_str(), textColor);
 	if (!textSurface)
 	{
-		printf("Unable to render text surface! SDL_ttf Error: %s\n", TTF_GetError());
+		printf("The text surface could not be rendered!\nSDL_ttf Error: %s\n", TTF_GetError());
 	}
 	else
 	{
@@ -235,7 +236,7 @@ bool Texture::loadFromRenderedText(std::string textureText, SDL_Color textColor,
 		mTexture = SDL_CreateTextureFromSurface(renderer, textSurface);
 		if (!mTexture)
 		{
-			printf("Unable to create texture from rendered text! SDL Error: %s\n", SDL_GetError());
+			printf("The text texture could not be created!\nSDL Error: %s\n", SDL_GetError());
 		}
 		else
 		{
@@ -599,11 +600,11 @@ Window::Window()
 {
 	mWindow = NULL;
 	mRenderer = NULL;
-	mMouseFocus = false;
-	mKeyboardFocus = false;
-	mFullScreen = false;
+	mMouseFocus =
+	mKeyboardFocus =
+	mFullScreen =
 	mMinimized = false;
-	mWidth = 0;
+	mWidth =
 	mHeight = 0;
 }
 
@@ -612,50 +613,48 @@ bool Window::init()
 	mWindow = SDL_CreateWindow(WINDOW_TITLE, SDL_WINDOWPOS_UNDEFINED,
 		SDL_WINDOWPOS_UNDEFINED, SCREEN_WIDTH, SCREEN_HEIGHT, SDL_WINDOW_SHOWN | SDL_WINDOW_RESIZABLE);
 
-	bool success = mWindow != NULL;
-	if (success)
+	if (!mWindow)
 	{
-		mMouseFocus = true;
-		mKeyboardFocus = true;
-		mWidth = SCREEN_WIDTH;
-		mHeight = SCREEN_HEIGHT;
-
-		SDL_SysWMinfo info;
-		SDL_VERSION(&info.version);
-		if (SDL_GetWindowWMInfo(mWindow, &info))
-		{
-			HMENU hMenubar = CreateMenu();
-			HMENU hGame = CreateMenu();
-			HMENU hAbout = CreateMenu();
-			AppendMenu(hMenubar, MF_POPUP, (UINT_PTR)hGame, "&Game");
-			AppendMenu(hMenubar, MF_POPUP, (UINT_PTR)hAbout, "&About");
-			AppendMenu(hGame, MF_STRING, ID_EXIT, "&Exit");
-			AppendMenu(hAbout, MF_STRING, NULL, "This awesome clone was created by Chris Roxby.");
-			SetMenu(info.info.win.window, hMenubar);
-		}
-		else
-		{
-			printf("Could not create menu bar!\n");
-			success = false;
-		}
+		printf("The window could not be created!\n");
+		return false;
 	}
 
-	/* All this for an icon... */
-	SDL_Surface* iconSurface = SDL_ConvertSurface(IMG_Load("aces_black.png"), SDL_GetWindowSurface(mWindow)->format, NULL);
-	if (!iconSurface)
+	mMouseFocus =
+		mKeyboardFocus = true;
+	mWidth = SCREEN_WIDTH;
+	mHeight = SCREEN_HEIGHT;
+
+	SDL_SysWMinfo info;
+	SDL_VERSION(&info.version);
+	if (SDL_GetWindowWMInfo(mWindow, &info))
 	{
-		printf("Unable to setup icon! SDL Error: %s\n", SDL_GetError());
-		success = false;
+		std::stringstream ssGmeVer, ssSDLver, ssTTFver, ssMIXver, ssIMGver;
+		ssGmeVer << PROG_NAME << " version " << GAME_VERSION;
+		ssSDLver << "SDL main version " << SDL_MAJOR_VERSION << "." << SDL_MINOR_VERSION << "." << SDL_PATCHLEVEL;
+		ssTTFver << "SDL TTF version " << SDL_TTF_MAJOR_VERSION << "." << SDL_TTF_MINOR_VERSION << "." << SDL_TTF_PATCHLEVEL;
+		ssMIXver << "SDL Mixer version " << SDL_MIXER_MAJOR_VERSION << "." << SDL_MIXER_MINOR_VERSION << "." << SDL_MIXER_PATCHLEVEL;
+		ssIMGver << "SDL Image version " << SDL_IMAGE_MAJOR_VERSION <<"."<< SDL_IMAGE_MINOR_VERSION << "." << SDL_IMAGE_PATCHLEVEL;
+
+		HMENU hMenubar = CreateMenu();
+		HMENU hGame = CreateMenu();
+		HMENU hAbout = CreateMenu();
+		AppendMenu(hMenubar, MF_POPUP, (UINT_PTR)hGame, "&Game");
+		AppendMenu(hMenubar, MF_POPUP, (UINT_PTR)hAbout, "&About");
+		AppendMenu(hGame, MF_STRING, MENU_EXIT, "&Exit");
+		AppendMenu(hAbout, MF_STRING, NULL, "This awesome clone was created by Chris Roxby.");
+		AppendMenu(hAbout, MF_STRING, NULL, ssGmeVer.str().c_str());
+		AppendMenu(hAbout, MF_SEPARATOR, NULL, "");
+		AppendMenu(hAbout, MF_STRING, NULL, ssTTFver.str().c_str());
+		AppendMenu(hAbout, MF_STRING, NULL, ssMIXver.str().c_str());
+		AppendMenu(hAbout, MF_STRING, NULL, ssIMGver.str().c_str());
+		SetMenu(info.info.win.window, hMenubar);
+		return true;
 	}
 	else
 	{
-		SDL_SetColorKey(iconSurface, true, SDL_MapRGB(iconSurface->format, TRANSPARENT_COLOR));
-		SDL_SetWindowIcon(mWindow, iconSurface);
-		SDL_FreeSurface(iconSurface);
-		iconSurface = NULL;
+		printf("The menu bar could not be created!\n");
+		return false;
 	}
-
-	return success;
 }
 
 SDL_Renderer* Window::createRenderer()
@@ -813,7 +812,7 @@ bool AssetManager::Init()
 	/* Initialize SDL */
 	if (SDL_Init(SDL_INIT_EVENTS | SDL_INIT_VIDEO | SDL_INIT_AUDIO) < 0)
 	{
-		printf("SDL could not initialize! SDL Error: %s\n", SDL_GetError());
+		printf("SDL could not initialize!\nSDL Error: %s\n", SDL_GetError());
 		success = false;
 	}
 	else
@@ -827,7 +826,7 @@ bool AssetManager::Init()
 		/* Create window */
 		if (!mWindow.init())
 		{
-			printf("Window could not be created! SDL Error: %s\n", SDL_GetError());
+			printf("The window could not be created!\nSDL Error: %s\n", SDL_GetError());
 			success = false;
 		}
 		else
@@ -836,7 +835,7 @@ bool AssetManager::Init()
 			mRenderer = mWindow.createRenderer();
 			if (!mRenderer)
 			{
-				printf("Renderer could not be created! SDL Error: %s\n", SDL_GetError());
+				printf("The renderer could not be created!\nSDL Error: %s\n", SDL_GetError());
 				success = false;
 			}
 			else
@@ -848,21 +847,21 @@ bool AssetManager::Init()
 				int imgFlags = IMG_INIT_PNG;
 				if (!(IMG_Init(imgFlags) & imgFlags))
 				{
-					printf("SDL_image could not initialize! SDL_image Error: %s\n", IMG_GetError());
+					printf("SDL_image could not initialize!\nSDL_image Error: %s\n", IMG_GetError());
 					success = false;
 				}
 
 				/* Initialize SDL_ttf */
 				if (TTF_Init() == -1)
 				{
-					printf("SDL_ttf could not initialize! SDL_ttf Error: %s\n", TTF_GetError());
+					printf("SDL_ttf could not initialize!\nSDL_ttf Error: %s\n", TTF_GetError());
 					success = false;
 				}
 
 				/* Initialize SDL_mixer */
 				if (Mix_OpenAudio(44100, MIX_DEFAULT_FORMAT, MIX_DEFAULT_CHANNELS, 2048) < 0)
 				{
-					printf("SDL_mixer could not initialize! SDL_mixer Error: %s\n", Mix_GetError());
+					printf("SDL_mixer could not initialize!\nSDL_mixer Error: %s\n", Mix_GetError());
 					success = false;
 				}
 			}
@@ -879,12 +878,13 @@ bool AssetManager::LoadMedia()
 	mFont = TTF_OpenFont("C:/Windows/Fonts/calibri.ttf", 28);
 	if (!mFont)
 	{
-		printf("Failed to load font! SDL_ttf Error: %s\n", TTF_GetError()); success = false;
+		printf("The font could not be loaded!\nSDL_ttf Error: %s\n", TTF_GetError());
+		success = false;
 	}
 
 	if (!mBackgroundTexture.loadFromFile("table.png", mRenderer))
 	{
-		printf("Failed to load texture image!\n");
+		printf("The background texture could not be loaded!\n");
 		success = false;
 	}
 
@@ -892,21 +892,21 @@ bool AssetManager::LoadMedia()
 	mSound = Mix_LoadWAV("fire.wav");
 	if (!mSound)
 	{
-		printf("Failed to load sound effect! SDL_mixer Error: %s\n", Mix_GetError());
+		printf("The sound effect could not be loaded!\nSDL_mixer Error: %s\n", Mix_GetError());
 		success = false;
 	}
 
 	/* Load deck texture */
 	if (!mDeckTexture.loadFromFile("cards/back.png", mRenderer))
 	{
-		printf("Failed to load deck texture!\n");
+		printf("The deck texture could not be loaded!\n");
 		success = false;
 	}
 
 	/* Load outline texture */
 	if (!mOutlineTexture.loadFromFile("cards/outline.png", mRenderer))
 	{
-		printf("Failed to load outline texture!\n");
+		printf("The outline texture could not be loaded!\n");
 		success = false;
 	}
 
@@ -916,9 +916,10 @@ bool AssetManager::LoadMedia()
 	{
 		for (int j = 0; j <= NUM_FACES; j++)
 		{
+			/* FIXME: Can't we just set these = mDeckTexture ? */
 			if (!mFaceTextures[i][j].loadFromFile("cards/back.png", mRenderer))
 			{
-				printf("Failed to load deck texture!\n");
+				printf("The card back texture could not be loaded!\n");
 				success = false;
 				break;
 			}
@@ -931,14 +932,14 @@ bool AssetManager::LoadMedia()
 	*/
 	for (int i = 0; i < NUM_SUITS; i++)
 	{
-		const std::string suitName (NameOfSuit(i));
+		const std::string suitName (nameOfSuit(i));
 		for (int j = 1; j <= NUM_FACES; j++)
 		{
 			std::stringstream filename;
 			filename << "cards/" << suitName << "/" << j << ".png";
 			if (!mFaceTextures[i][j].loadFromFile(filename.str(), mRenderer))
 			{
-				printf("Failed to load texture for %i of %s!\n", j, suitName.c_str());
+				printf("The texture could not be loaded for the %i of %s!\n", j, suitName.c_str());
 				success = false;
 				break;
 			}
